@@ -13,6 +13,8 @@ slack = "^0.0.2"
 slack-sdk = "^3.27.1"
 bs4 = "^0.0.2"
 python-dotenv = "^1.0.1"
+pytz = "^2024.1"
+google-generativeai = "^0.5.2"
 
 
 [build-system]
