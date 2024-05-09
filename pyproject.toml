@@ -2,7 +2,7 @@
 name = "slackbot-test"
 version = "0.1.0"
 description = ""
-authors = ["takahashimichika <takahashi@ai2-jp.com>"]
+authors = ["takahashimichika"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
