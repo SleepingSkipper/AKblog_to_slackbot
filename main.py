@@ -15,7 +15,7 @@ SLACK_API_TOKEN = os.getenv('SLACK_API_TOKEN')
 
 GEMINI=False
 SLACK_CHANNEL = "#test-workspace"  # 投稿するSlackチャンネル名
-FREQ = 12  # Frequency of invoking this bot in int
+FREQ = 24  # Frequency of invoking this bot in int
 
 
 if GEMINI:
@@ -35,13 +35,21 @@ def get_page_info_of_ak_blog():
     r = requests.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
 
-    time_tag = soup.find('time')['datetime']
-    update_date_in_utc = datetime.fromisoformat(time_tag.replace("Z", "+00:00"))
+    # time_tag = soup.find('time')['datetime']
+    time_element = soup.find('time')
+    month_span = time_element.find('span')
+    day_span = month_span.find_next_sibling('span')
+    # Combine the month and day
+    date_string = f"{month_span.text} {day_span.text}"
+    update_date = datetime.strptime(date_string, "%B %d").replace(year=current_time_in_utc.year)
+
+
+    # update_date_in_utc = datetime.fromisoformat(time_tag.replace("Z", "+00:00"))
     last_check_time_in_utc = current_time_in_utc - timedelta(hours=FREQ)
-    # print(update_date_in_utc)
-    # print(current_time_in_utc)
-    # print(last_check_time_in_utc)
-    if current_time_in_utc > update_date_in_utc > last_check_time_in_utc:
+    print(current_time_in_utc)
+    print(update_date)
+    print(last_check_time_in_utc)
+    if current_time_in_utc.date() >= update_date.date() > last_check_time_in_utc.date():
         sections = soup.find_all('div', class_="SVELTE_HYDRATER contents")
         info = []
         for section in sections:
@@ -92,17 +100,41 @@ def summarize_and_translate(info):
     return result_list
 
 
+# def main():
+#     page_info = get_page_info_of_ak_blog()
+#     if page_info == "NO update":
+#         return
+#
+#     results = summarize_and_translate(get_page_info_of_ak_blog())
+#
+#     # メッセージの整形
+#     message = "\nhttps://huggingface.co/papers に新しい論文が追加されました！\n\n"
+#     for i, result in enumerate(results):
+#         message += str(i + 1) + ".📄\n" + result + "\n\n\n"
+#
+#     try:
+#         # Slackにメッセージを投稿
+#         webclient = WebClient(token=SLACK_API_TOKEN)
+#         response = webclient.chat_postMessage(
+#             channel=SLACK_CHANNEL,
+#             text=message
+#         )
+#         print(f"Message posted: {response['ts']}")
+#     except SlackApiError as e:
+#         print(f"Error posting message: {e}")
+
+
 def main():
     page_info = get_page_info_of_ak_blog()
     if page_info == "NO update":
-        return
-
-    results = summarize_and_translate(get_page_info_of_ak_blog())
-
-    # メッセージの整形
-    message = "\nhttps://huggingface.co/papers に新しい論文が追加されました！\n\n"
-    for i, result in enumerate(results):
-        message += str(i + 1) + ".📄\n" + result + "\n\n\n"
+        #return
+        message = "更新なし"
+    else:
+        results = summarize_and_translate(get_page_info_of_ak_blog())
+        # メッセージの整形
+        message = "\nhttps://huggingface.co/papers に新しい論文が追加されました！\n\n"
+        for i, result in enumerate(results):
+            message += str(i + 1) + ".📄\n" + result + "\n\n\n"
 
     try:
         # Slackにメッセージを投稿
